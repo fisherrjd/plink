@@ -1,4 +1,3 @@
-use godot::classes::rigid_body_2d::CcdMode;
 use godot::classes::{
     CircleShape2D, CollisionShape2D, IRigidBody2D, InputEvent, InputEventMouseButton, Line2D,
     PhysicsMaterial, RigidBody2D,
@@ -152,8 +151,9 @@ impl IRigidBody2D for Ball {
         // for a drawn circle and would rotate child nodes.
         self.base_mut().set_lock_rotation_enabled(true);
         self.base_mut().set_linear_damp(BALL_DAMP);
-        self.base_mut()
-            .set_continuous_collision_detection_mode(CcdMode::CAST_RAY);
+        // No CCD: Godot 2D's ray-cast CCD kills velocity on fast impacts
+        // (~3% retention instead of the bounce coefficient). Tunneling is
+        // prevented by the 120Hz physics tick in project.godot instead.
 
         let mut line = Line2D::new_alloc();
         line.set_width(4.0);

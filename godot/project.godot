@@ -17,4 +17,5 @@ window/size/viewport_height=720
 
 [physics]
 
+common/physics_ticks_per_second=120
 2d/default_gravity=0.0
