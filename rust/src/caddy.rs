@@ -187,21 +187,29 @@ impl Caddy {
             return;
         };
 
-        if let Some(putt) = dict.get("putt") {
-            let Ok(putt) = putt.try_to::<VarDictionary>() else {
-                return;
+        for kind in ["putt", "chip"] {
+            let Some(stroke) = dict.get(kind) else {
+                continue;
+            };
+            let Ok(stroke) = stroke.try_to::<VarDictionary>() else {
+                continue;
             };
             let get = |key: &str| {
-                putt.get(key)
+                stroke
+                    .get(key)
                     .and_then(|v| v.try_to::<f64>().ok())
                     .unwrap_or(0.0) as f32
             };
             let dir = Vector2::new(get("dx"), get("dy"));
             let power = get("power");
             if let Some((mut ball, _)) = self.current_nodes() {
-                let ok = ball.bind_mut().putt(dir, power);
+                let ok = if kind == "chip" {
+                    ball.bind_mut().chip(dir, power)
+                } else {
+                    ball.bind_mut().putt(dir, power)
+                };
                 godot_print!(
-                    "Caddy: putt dir=({:.0},{:.0}) power={power:.2} -> {ok}",
+                    "Caddy: {kind} dir=({:.0},{:.0}) power={power:.2} -> {ok}",
                     dir.x,
                     dir.y
                 );

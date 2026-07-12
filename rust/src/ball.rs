@@ -28,7 +28,7 @@ pub struct Ball {
     max_drag: f32,
     /// Impulse applied per pixel of drag.
     #[export]
-    #[init(val = 5.0)]
+    #[init(val = 7.0)]
     power: f32,
     /// Below this speed (px/s) the ball is considered stopped.
     #[export]
@@ -36,9 +36,14 @@ pub struct Ball {
     stop_speed: f32,
 
     aiming: bool,
+    /// True while the current drag is a chip (right-button) aim.
+    aim_chip: bool,
     sunk: bool,
     stopped: bool,
     still_time: f32,
+    /// Chip flight state: seconds remaining / total flight time.
+    air_left: f32,
+    air_total: f32,
     aim_line: Option<Gd<Line2D>>,
     base: Base<RigidBody2D>,
 }
@@ -76,6 +81,38 @@ impl Ball {
         self.still_time = 0.0;
         self.signals().stroke_taken().emit();
         true
+    }
+
+    /// Lofted stroke: same aiming as `putt`, but the ball flies over walls,
+    /// sand, and the cup for a power-scaled time before landing and rolling.
+    #[func]
+    pub fn chip(&mut self, dir: Vector2, power: f32) -> bool {
+        if self.sunk || !self.stopped || dir.length() < 0.001 {
+            return false;
+        }
+        let power = power.clamp(0.0, 1.0);
+        let impulse = dir.normalized() * (power * self.max_drag * self.power);
+        self.base_mut().apply_impulse(impulse);
+        self.air_total = 0.22 + 0.38 * power;
+        self.air_left = self.air_total;
+        self.base_mut().set_collision_layer(0);
+        self.base_mut().set_collision_mask(0);
+        self.stopped = false;
+        self.still_time = 0.0;
+        self.signals().stroke_taken().emit();
+        true
+    }
+
+    fn airborne(&self) -> bool {
+        self.air_left > 0.0
+    }
+
+    fn land(&mut self) {
+        self.air_left = 0.0;
+        self.base_mut().set_collision_layer(1);
+        self.base_mut().set_collision_mask(1);
+        self.base_mut().set_linear_damp(BALL_DAMP);
+        self.base_mut().queue_redraw();
     }
 
     pub fn is_stopped(&self) -> bool {
@@ -129,7 +166,15 @@ impl IRigidBody2D for Ball {
     }
 
     fn draw(&mut self) {
-        let radius = self.radius;
+        let mut radius = self.radius;
+        if self.airborne() {
+            // Swell mid-flight to sell the height.
+            let progress = 1.0 - self.air_left / self.air_total;
+            radius *= 1.0 + 0.9 * (std::f32::consts::PI * progress).sin();
+            let shadow = Color::from_rgba(0.0, 0.0, 0.0, 0.35);
+            self.base_mut()
+                .draw_circle(Vector2::new(6.0, 10.0), radius * 0.8, shadow);
+        }
         self.base_mut()
             .draw_circle(Vector2::ZERO, radius, Color::from_rgb(0.95, 0.95, 0.9));
     }
@@ -148,6 +193,17 @@ impl IRigidBody2D for Ball {
 
     fn physics_process(&mut self, delta: f64) {
         if self.sunk || self.stopped {
+            return;
+        }
+        if self.airborne() {
+            self.air_left -= delta as f32;
+            // Rough's body_exited handler restores rolling damp when the
+            // collision layer clears; keep flight friction-free regardless.
+            self.base_mut().set_linear_damp(0.0);
+            self.base_mut().queue_redraw();
+            if self.air_left <= 0.0 {
+                self.land();
+            }
             return;
         }
         if self.base().get_linear_velocity().length() < self.stop_speed {
@@ -169,14 +225,24 @@ impl IRigidBody2D for Ball {
         let Ok(button) = event.try_cast::<InputEventMouseButton>() else {
             return;
         };
-        if button.get_button_index() != MouseButton::LEFT {
+        let index = button.get_button_index();
+        if index != MouseButton::LEFT && index != MouseButton::RIGHT {
             return;
         }
         if button.is_pressed() {
             let pos = self.base().get_global_position();
             let mouse = self.base().get_global_mouse_position();
-            if self.stopped && mouse.distance_to(pos) <= self.grab_radius {
+            if self.stopped && !self.aiming && mouse.distance_to(pos) <= self.grab_radius {
                 self.aiming = true;
+                self.aim_chip = index == MouseButton::RIGHT;
+                let color = if self.aim_chip {
+                    Color::from_rgba(1.0, 0.55, 0.2, 0.9) // orange: chip
+                } else {
+                    Color::from_rgba(1.0, 0.9, 0.3, 0.9) // yellow: putt
+                };
+                if let Some(line) = &mut self.aim_line {
+                    line.set_default_color(color);
+                }
             }
         } else if self.aiming {
             self.aiming = false;
@@ -186,7 +252,11 @@ impl IRigidBody2D for Ball {
             let shot = self.shot_vector();
             if shot.length() > 2.0 {
                 let power = shot.length() / self.max_drag;
-                self.putt(shot, power);
+                if self.aim_chip {
+                    self.chip(shot, power);
+                } else {
+                    self.putt(shot, power);
+                }
             }
         }
     }

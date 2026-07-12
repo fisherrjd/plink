@@ -22,6 +22,10 @@ size = Vector2(30, 220)
 position = Vector2(1120, 360)
 size = Vector2(30, 220)
 
+[node name="Pad" type="SpeedPad" parent="."]
+position = Vector2(500, 360)
+size = Vector2(90, 120)
+
 [node name="Cup" type="Hole" parent="."]
 position = Vector2(1030, 360)
 

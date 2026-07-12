@@ -40,6 +40,10 @@ position = Vector2(680, 480)
 rotation = -0.5
 size = Vector2(240, 26)
 
+[node name="Pad" type="SpeedPad" parent="."]
+position = Vector2(800, 360)
+size = Vector2(60, 110)
+
 [node name="Post1" type="Wall" parent="."]
 position = Vector2(990, 280)
 size = Vector2(30, 30)

@@ -113,14 +113,14 @@ def main():
 
     if cmd == "state":
         print(fmt(read_state()))
-    elif cmd == "putt":
+    elif cmd in ("putt", "chip"):
         tx, ty, power = map(float, sys.argv[2:5])
         s = read_state()
         ball = s.get("ball")
         if not ball:
             sys.exit("no ball in state (hole transition?) — retry in a second")
         dx, dy = tx - ball["x"], ty - ball["y"]
-        write_command({"putt": {"dx": dx, "dy": dy, "power": power}})
+        write_command({cmd: {"dx": dx, "dy": dy, "power": power}})
         wait_outcome(s)
     elif cmd == "shot":
         dx, dy, power = map(float, sys.argv[2:5])

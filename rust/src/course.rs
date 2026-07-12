@@ -115,6 +115,78 @@ impl IArea2D for Rough {
     }
 }
 
+/// Boost pad: fires the ball along the pad's +X axis (rotate the node to
+/// aim it) once per entry.
+#[derive(GodotClass)]
+#[class(init, base=Area2D)]
+pub struct SpeedPad {
+    #[export]
+    #[init(val = Vector2::new(90.0, 90.0))]
+    size: Vector2,
+    /// Speed (px/s) added along the pad's facing when the ball rolls on.
+    #[export]
+    #[init(val = 700.0)]
+    boost: f32,
+
+    pending: Option<Gd<Ball>>,
+    base: Base<Area2D>,
+}
+
+#[godot_api]
+impl SpeedPad {
+    #[func]
+    fn on_body_entered(&mut self, body: Gd<Node2D>) {
+        if let Ok(ball) = body.try_cast::<Ball>() {
+            self.pending = Some(ball);
+        }
+    }
+}
+
+#[godot_api]
+impl IArea2D for SpeedPad {
+    fn ready(&mut self) {
+        let mut shape = RectangleShape2D::new_gd();
+        shape.set_size(self.size);
+        let mut collider = CollisionShape2D::new_alloc();
+        collider.set_shape(&shape);
+        self.base_mut().add_child(&collider);
+
+        let entered = self.to_gd().callable("on_body_entered");
+        self.base_mut().connect("body_entered", &entered);
+    }
+
+    fn draw(&mut self) {
+        let rect = Rect2::new(-self.size * 0.5, self.size);
+        let base_color = Color::from_rgba(0.15, 0.65, 0.75, 0.9);
+        let chevron = Color::from_rgba(1.0, 1.0, 1.0, 0.85);
+        let h = self.size.y * 0.28;
+        self.base_mut().draw_rect(rect, base_color);
+        for offset in [-14.0, 14.0] {
+            let tip = Vector2::new(offset + 14.0, 0.0);
+            let top = Vector2::new(offset - 14.0, -h);
+            let bottom = Vector2::new(offset - 14.0, h);
+            self.base_mut()
+                .draw_line_ex(top, tip, chevron)
+                .width(6.0)
+                .done();
+            self.base_mut()
+                .draw_line_ex(bottom, tip, chevron)
+                .width(6.0)
+                .done();
+        }
+    }
+
+    fn physics_process(&mut self, _delta: f64) {
+        let Some(ball) = self.pending.take() else {
+            return;
+        };
+        let dir = self.base().get_global_transform().a.normalized();
+        let mut rb = ball.upcast::<RigidBody2D>();
+        let vel = rb.get_linear_velocity();
+        rb.set_linear_velocity(vel + dir * self.boost);
+    }
+}
+
 /// The cup. Captures the ball when it overlaps while moving slowly enough,
 /// so fast shots roll over instead of sinking.
 #[derive(GodotClass)]

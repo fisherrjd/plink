@@ -58,25 +58,25 @@ grow_vertical = 2
 color = Color(0, 0, 0, 0.55)
 
 [node name="Panel" type="Panel" parent="Scorecard"]
-offset_left = 440.0
-offset_top = 140.0
-offset_right = 840.0
-offset_bottom = 580.0
+offset_left = 420.0
+offset_top = 40.0
+offset_right = 860.0
+offset_bottom = 690.0
 
 [node name="Results" type="Label" parent="Scorecard/Panel"]
 offset_left = 30.0
-offset_top = 24.0
-offset_right = 370.0
-offset_bottom = 340.0
-theme_override_font_sizes/font_size = 22
+offset_top = 16.0
+offset_right = 410.0
+offset_bottom = 520.0
+theme_override_font_sizes/font_size = 15
 text = "Scorecard"
 
 [node name="MenuButton" type="Button" parent="Scorecard/Panel"]
-offset_left = 100.0
-offset_top = 370.0
-offset_right = 300.0
-offset_bottom = 415.0
-theme_override_font_sizes/font_size = 20
+offset_left = 120.0
+offset_top = 594.0
+offset_right = 320.0
+offset_bottom = 638.0
+theme_override_font_sizes/font_size = 18
 text = "Back to Menu"
 
 [connection signal="pressed" from="Scorecard/Panel/MenuButton" to="." method="on_back_to_menu"]

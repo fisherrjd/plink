@@ -1,50 +1,75 @@
-# course1 — Claude's round (2026-07-12)
+# course1 — Claude's rounds (2026-07-12)
 
 Played autonomously via the Caddy bridge (`PLINK_CADDY=1` + `tools/caddy.py`),
-one genuine aimed stroke per command. Screenshots in this directory were
-auto-captured at the start of each hole; `scorecard.png` is the in-game final
-scorecard.
+one genuinely aimed stroke per command. Screenshots in this directory are
+auto-captured at the start of each hole (current set is from round 2, showing
+the speed pads); `scorecard.png` is the in-game final scorecard.
 
-## Final score: 45 strokes — par 62 — **17 under par**
+## Scores
 
-| Hole | Concept          | Par | Strokes | +/- |
-|-----:|------------------|----:|--------:|----:|
-|  1 | straight            | 2 | 2 | E  |
-|  2 | L-dogleg            | 3 | 2 | -1 |
-|  3 | center block        | 3 | 2 | -1 |
-|  4 | funnel + post       | 4 | 3 | -1 |
-|  5 | bank gap            | 2 | 2 | E  |
-|  6 | narrow gate         | 3 | 2 | -1 |
-|  7 | S-chicane           | 4 | 3 | -1 |
-|  8 | pinball posts       | 3 | 2 | -1 |
-|  9 | long corridor       | 3 | 2 | -1 |
-| 10 | U-turn              | 4 | 3 | -1 |
-| 11 | diamond bounce      | 3 | 2 | -1 |
-| 12 | Z double-dogleg     | 4 | 3 | -1 |
-| 13 | sand trap           | 3 | 3 | E  |
-| 14 | funnel gauntlet     | 4 | 3 | -1 |
-| 15 | ring                | 5 | 2 | **-3 (albatross)** |
-| 16 | shielded pocket     | 3 | 2 | -1 |
-| 17 | sand + posts        | 4 | 3 | -1 |
-| 18 | finale              | 5 | 4 | -1 |
+| Round | Rules | Total | vs par 62 |
+|------:|-------|------:|----------:|
+| 1 | v1 physics (no chips/pads, power 5) | 45 | **-17** |
+| 2 | power 7 + chip shots + speed pads | 37 | **-25** * |
+| 3 | same, hole-17 pad fixed (headless validation) | 38 | **-24** |
 
-Front nine: 20 (par 27, -7) · Back nine: 25 (par 35, -10)
+\* round 2's hole 17 benefited from a placement bug: the speed pad overlapped
+the ball spawn and fired it into the sand for free. Fixed before round 3.
 
-## Round notes
+## Round 3 (current rules, honest) hole-by-hole
 
-- Physics calibration: a full-power putt rolls ~727px; roll distance is
-  ~linear in power. Sand (`Rough`, damp 4.5) costs ~4.1x distance.
-- Highlight: hole 15 (ring, par 5) fell in 2 — approach to the mouth of the
-  ring, then one thread through the bottom gap to the center cup.
-- Hole 12's par-4 Z fell to a single diagonal threading both gaps.
-- No hole played over par.
+| Hole | Concept | Par | Strokes | Note |
+|-----:|---------|----:|--------:|------|
+|  1 | straight            | 2 | 1 | ace — new power reaches in one |
+|  2 | L-dogleg            | 3 | 2 | |
+|  3 | center block        | 3 | 2 | |
+|  4 | funnel + post       | 4 | 3 | |
+|  5 | bank gap            | 2 | 1 | **chip-in ace over the wall** |
+|  6 | narrow gate         | 3 | 1 | **chip-in ace over the gate** |
+|  7 | S-chicane           | 4 | 3 | |
+|  8 | pinball posts       | 3 | 2 | |
+|  9 | long corridor       | 3 | 1 | **speed-pad ace** |
+| 10 | U-turn              | 4 | 3 | pad ride on the return arm |
+| 11 | diamond bounce      | 3 | 2 | |
+| 12 | Z double-dogleg     | 4 | 3 | one diagonal threads both gaps |
+| 13 | sand trap           | 3 | 2 | full-power second stroke banks in |
+| 14 | funnel gauntlet     | 4 | 2 | **chip-in eagle over the post** |
+| 15 | ring                | 5 | 2 | albatross via the bottom gap |
+| 16 | shielded pocket     | 3 | 2 | |
+| 17 | sand + posts        | 4 | 3 | pad ride into sand, blast out, tap |
+| 18 | finale              | 5 | 3 | pad boost carries through the sand |
 
-## Design observations (for the next iteration)
+Rounds 2 and 3 replayed identically shot-for-shot (physics is deterministic)
+except the fixed hole 17.
 
-- Par 62 is soft: with file-precise aim every hole is birdieable; pars should
-  assume 2 positioning strokes rarely miss. Human mouse play will be spraying
-  more — pars are probably right for humans, easy for a machine.
-- The 18-line scorecard overflows its panel and collides with the
-  Back-to-Menu button — needs a layout fix.
-- Max roll (~727px) can't cross the 990px playfield; every long hole becomes
-  drive + tap. More swing velocity would add risk/reward.
+## Mechanics evaluation
+
+**Swing velocity (power 5 → 7).** Max roll went from ~727px to ~1018px.
+Hole 1 became aceable, long lanes stopped being automatic two-putts, and
+full-power shots now carry real overshoot risk (bank-backs off the far wall).
+Feels much livelier; recommended keeping.
+
+**Chip shot (right-click drag, orange aim line).** The ball goes airborne for
+0.22–0.6s scaled by power (swells visually, casts a shadow), ignoring walls,
+sand, cup, and pads until it lands, then rolls. Great risk/reward: flight
+length is fixed by power, so the rollout is hard to judge — but flying a wall
+turns par holes into ace chances (holes 5/6). Balance note: cups placed near
+the back wall are generous to chips because the bank-back funnels returns;
+future holes could place cups mid-field to punish overshoot.
+
+**Speed pads (teal chevrons).** Fire the ball +700 px/s along the pad's
+facing on entry. Best used as a commitment device: you putt gently onto the
+pad and surrender control. The hole-9 pad ace and the hole-18
+pad-through-sand carry both feel great. Lesson learned: keep pads well clear
+of the ball spawn (hole 17 originally auto-launched the ball at hole load).
+
+**Sand (Rough).** With power 7, a 250px sand field still eats ~2 strokes
+unless you chip over or pad through — good hazard economy.
+
+## Known rough edges
+
+- Chips can land inside a wall if flight time expires over one; physics
+  shoves the ball out, which looks glitchy but plays on. Could clamp flight
+  to end only over open ground later.
+- Par values are calibrated for machine-precision aim; humans should treat
+  par as a good score, not a baseline.
