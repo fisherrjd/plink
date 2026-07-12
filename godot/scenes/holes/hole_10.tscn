@@ -1,0 +1,33 @@
+[gd_scene format=3]
+
+[node name="Hole10" type="Node2D"]
+
+[node name="Felt" type="Felt" parent="."]
+position = Vector2(640, 360)
+size = Vector2(990, 460)
+
+[node name="WallTop" type="Wall" parent="."]
+position = Vector2(640, 145)
+size = Vector2(990, 30)
+
+[node name="WallBottom" type="Wall" parent="."]
+position = Vector2(640, 575)
+size = Vector2(990, 30)
+
+[node name="WallLeft" type="Wall" parent="."]
+position = Vector2(160, 360)
+size = Vector2(30, 400)
+
+[node name="WallRight" type="Wall" parent="."]
+position = Vector2(1120, 360)
+size = Vector2(30, 400)
+
+[node name="Divider" type="Wall" parent="."]
+position = Vector2(490, 360)
+size = Vector2(690, 30)
+
+[node name="Cup" type="Hole" parent="."]
+position = Vector2(300, 470)
+
+[node name="Ball" type="Ball" parent="."]
+position = Vector2(300, 250)

@@ -6,6 +6,9 @@ use godot::classes::{
 use godot::global::MouseButton;
 use godot::prelude::*;
 
+/// Baseline rolling friction; `Rough` patches raise damping and restore this.
+pub const BALL_DAMP: f32 = 1.1;
+
 /// The golf ball. Click near it while it's stopped, drag away to aim
 /// (slingshot style), release to putt.
 #[derive(GodotClass)]
@@ -59,6 +62,30 @@ impl Ball {
         self.base_mut().set_freeze_enabled(true);
     }
 
+    /// Programmatic stroke (used by the Caddy bridge). `power` is 0..1 of
+    /// the maximum drag; counts as a normal stroke. Returns false if the
+    /// ball isn't ready to be hit.
+    #[func]
+    pub fn putt(&mut self, dir: Vector2, power: f32) -> bool {
+        if self.sunk || !self.stopped || dir.length() < 0.001 {
+            return false;
+        }
+        let impulse = dir.normalized() * (power.clamp(0.0, 1.0) * self.max_drag * self.power);
+        self.base_mut().apply_impulse(impulse);
+        self.stopped = false;
+        self.still_time = 0.0;
+        self.signals().stroke_taken().emit();
+        true
+    }
+
+    pub fn is_stopped(&self) -> bool {
+        self.stopped
+    }
+
+    pub fn is_sunk(&self) -> bool {
+        self.sunk
+    }
+
     fn shot_vector(&self) -> Vector2 {
         let pos = self.base().get_global_position();
         let mouse = self.base().get_global_mouse_position();
@@ -87,7 +114,7 @@ impl IRigidBody2D for Ball {
         // Rolling friction is faked with damping; rotation is irrelevant
         // for a drawn circle and would rotate child nodes.
         self.base_mut().set_lock_rotation_enabled(true);
-        self.base_mut().set_linear_damp(1.1);
+        self.base_mut().set_linear_damp(BALL_DAMP);
         self.base_mut()
             .set_continuous_collision_detection_mode(CcdMode::CAST_RAY);
 
@@ -158,11 +185,8 @@ impl IRigidBody2D for Ball {
             }
             let shot = self.shot_vector();
             if shot.length() > 2.0 {
-                let impulse = shot * self.power;
-                self.base_mut().apply_impulse(impulse);
-                self.stopped = false;
-                self.still_time = 0.0;
-                self.signals().stroke_taken().emit();
+                let power = shot.length() / self.max_drag;
+                self.putt(shot, power);
             }
         }
     }

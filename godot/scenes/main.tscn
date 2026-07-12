@@ -1,8 +1,10 @@
 [gd_scene format=3]
 
 [node name="Main" type="GameManager"]
-hole_scenes = Array[String](["res://scenes/holes/hole_1.tscn", "res://scenes/holes/hole_2.tscn", "res://scenes/holes/hole_3.tscn", "res://scenes/holes/hole_4.tscn"])
-pars = PackedInt32Array(2, 3, 3, 4)
+hole_scenes = Array[String](["res://scenes/holes/hole_1.tscn", "res://scenes/holes/hole_2.tscn", "res://scenes/holes/hole_3.tscn", "res://scenes/holes/hole_4.tscn", "res://scenes/holes/hole_5.tscn", "res://scenes/holes/hole_6.tscn", "res://scenes/holes/hole_7.tscn", "res://scenes/holes/hole_8.tscn", "res://scenes/holes/hole_9.tscn", "res://scenes/holes/hole_10.tscn", "res://scenes/holes/hole_11.tscn", "res://scenes/holes/hole_12.tscn", "res://scenes/holes/hole_13.tscn", "res://scenes/holes/hole_14.tscn", "res://scenes/holes/hole_15.tscn", "res://scenes/holes/hole_16.tscn", "res://scenes/holes/hole_17.tscn", "res://scenes/holes/hole_18.tscn"])
+pars = PackedInt32Array(2, 3, 3, 4, 2, 3, 4, 3, 3, 4, 3, 4, 3, 4, 5, 3, 4, 5)
+
+[node name="Caddy" type="Caddy" parent="."]
 
 [node name="Backdrop" type="CanvasLayer" parent="."]
 layer = -1
@@ -13,6 +15,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 color = Color(0.08, 0.12, 0.09, 1)
 
 [node name="HoleContainer" type="Node2D" parent="."]

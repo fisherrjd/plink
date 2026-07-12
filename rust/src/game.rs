@@ -20,6 +20,7 @@ pub struct GameManager {
 
     current: usize,
     strokes: Vec<i32>,
+    finished: bool,
     base: Base<Node>,
 }
 
@@ -93,6 +94,7 @@ impl GameManager {
     }
 
     fn show_scorecard(&mut self) {
+        self.finished = true;
         let mut text = String::from("Scorecard\n\n");
         for (i, strokes) in self.strokes.iter().enumerate() {
             let par = self.par_for(i);
@@ -125,6 +127,22 @@ impl GameManager {
 
     fn par_for(&self, hole: usize) -> i32 {
         self.pars.as_slice().get(hole).copied().unwrap_or(0)
+    }
+
+    pub fn hole_index(&self) -> usize {
+        self.current
+    }
+
+    pub fn stroke_counts(&self) -> Vec<i32> {
+        self.strokes.clone()
+    }
+
+    pub fn par_values(&self) -> Vec<i32> {
+        self.pars.as_slice().to_vec()
+    }
+
+    pub fn is_finished(&self) -> bool {
+        self.finished
     }
 }
 

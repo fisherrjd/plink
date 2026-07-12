@@ -11,3 +11,6 @@ debug/
 # godot
 godot/.godot/
 
+# caddy bridge runtime files
+.caddy/
+

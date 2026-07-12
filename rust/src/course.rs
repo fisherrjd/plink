@@ -4,7 +4,7 @@ use godot::classes::{
 };
 use godot::prelude::*;
 
-use crate::ball::Ball;
+use crate::ball::{Ball, BALL_DAMP};
 
 /// A rectangular bumper wall. Size/rotation come from the scene; collision
 /// shape and visuals are generated so hole scenes stay tiny.
@@ -52,6 +52,62 @@ pub struct Felt {
 
 #[godot_api]
 impl INode2D for Felt {
+    fn draw(&mut self) {
+        let rect = Rect2::new(-self.size * 0.5, self.size);
+        let color = self.color;
+        self.base_mut().draw_rect(rect, color);
+    }
+}
+
+/// Sand/rough patch: drags the ball down hard while it rolls through.
+#[derive(GodotClass)]
+#[class(init, base=Area2D)]
+pub struct Rough {
+    #[export]
+    #[init(val = Vector2::new(200.0, 150.0))]
+    size: Vector2,
+    #[export]
+    #[init(val = Color::from_rgb(0.78, 0.70, 0.45))]
+    color: Color,
+    /// Linear damping applied while the ball is inside.
+    #[export]
+    #[init(val = 4.5)]
+    damp: f32,
+    base: Base<Area2D>,
+}
+
+#[godot_api]
+impl Rough {
+    #[func]
+    fn on_body_entered(&mut self, body: Gd<Node2D>) {
+        if let Ok(ball) = body.try_cast::<Ball>() {
+            ball.upcast::<RigidBody2D>().set_linear_damp(self.damp);
+        }
+    }
+
+    #[func]
+    fn on_body_exited(&mut self, body: Gd<Node2D>) {
+        if let Ok(ball) = body.try_cast::<Ball>() {
+            ball.upcast::<RigidBody2D>().set_linear_damp(BALL_DAMP);
+        }
+    }
+}
+
+#[godot_api]
+impl IArea2D for Rough {
+    fn ready(&mut self) {
+        let mut shape = RectangleShape2D::new_gd();
+        shape.set_size(self.size);
+        let mut collider = CollisionShape2D::new_alloc();
+        collider.set_shape(&shape);
+        self.base_mut().add_child(&collider);
+
+        let entered = self.to_gd().callable("on_body_entered");
+        let exited = self.to_gd().callable("on_body_exited");
+        self.base_mut().connect("body_entered", &entered);
+        self.base_mut().connect("body_exited", &exited);
+    }
+
     fn draw(&mut self) {
         let rect = Rect2::new(-self.size * 0.5, self.size);
         let color = self.color;
