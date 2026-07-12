@@ -1,0 +1,13 @@
+.db
+.direnv
+result*
+
+# rust
+rust/target/
+debug/
+**/*.rs.bk
+*.pdb
+
+# godot
+godot/.godot/
+

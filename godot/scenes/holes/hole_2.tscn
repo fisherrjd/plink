@@ -1,0 +1,41 @@
+[gd_scene format=3]
+
+[node name="Hole2" type="Node2D"]
+
+[node name="FeltAcross" type="Felt" parent="."]
+position = Vector2(640, 480)
+size = Vector2(940, 190)
+
+[node name="FeltUp" type="Felt" parent="."]
+position = Vector2(1000, 360)
+size = Vector2(190, 460)
+
+[node name="WallBottom" type="Wall" parent="."]
+position = Vector2(640, 575)
+size = Vector2(940, 30)
+
+[node name="WallLeft" type="Wall" parent="."]
+position = Vector2(185, 480)
+size = Vector2(30, 190)
+
+[node name="WallTopInner" type="Wall" parent="."]
+position = Vector2(545, 385)
+size = Vector2(750, 30)
+
+[node name="WallRight" type="Wall" parent="."]
+position = Vector2(1095, 360)
+size = Vector2(30, 460)
+
+[node name="WallTopCap" type="Wall" parent="."]
+position = Vector2(1000, 145)
+size = Vector2(220, 30)
+
+[node name="WallInnerUp" type="Wall" parent="."]
+position = Vector2(905, 265)
+size = Vector2(30, 270)
+
+[node name="Cup" type="Hole" parent="."]
+position = Vector2(1000, 230)
+
+[node name="Ball" type="Ball" parent="."]
+position = Vector2(300, 480)

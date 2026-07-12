@@ -1,0 +1,79 @@
+[gd_scene format=3]
+
+[node name="Main" type="GameManager"]
+hole_scenes = Array[String](["res://scenes/holes/hole_1.tscn", "res://scenes/holes/hole_2.tscn", "res://scenes/holes/hole_3.tscn", "res://scenes/holes/hole_4.tscn"])
+pars = PackedInt32Array(2, 3, 3, 4)
+
+[node name="Backdrop" type="CanvasLayer" parent="."]
+layer = -1
+
+[node name="Color" type="ColorRect" parent="Backdrop"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.12, 0.09, 1)
+
+[node name="HoleContainer" type="Node2D" parent="."]
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="HoleLabel" type="Label" parent="HUD"]
+offset_left = 20.0
+offset_top = 12.0
+offset_right = 320.0
+offset_bottom = 44.0
+theme_override_font_sizes/font_size = 24
+text = "Hole 1/4"
+
+[node name="ParLabel" type="Label" parent="HUD"]
+offset_left = 20.0
+offset_top = 48.0
+offset_right = 320.0
+offset_bottom = 76.0
+theme_override_font_sizes/font_size = 20
+text = "Par"
+
+[node name="StrokeLabel" type="Label" parent="HUD"]
+offset_left = 20.0
+offset_top = 80.0
+offset_right = 320.0
+offset_bottom = 108.0
+theme_override_font_sizes/font_size = 20
+text = "Strokes: 0"
+
+[node name="Scorecard" type="CanvasLayer" parent="."]
+visible = false
+
+[node name="Dim" type="ColorRect" parent="Scorecard"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.55)
+
+[node name="Panel" type="Panel" parent="Scorecard"]
+offset_left = 440.0
+offset_top = 140.0
+offset_right = 840.0
+offset_bottom = 580.0
+
+[node name="Results" type="Label" parent="Scorecard/Panel"]
+offset_left = 30.0
+offset_top = 24.0
+offset_right = 370.0
+offset_bottom = 340.0
+theme_override_font_sizes/font_size = 22
+text = "Scorecard"
+
+[node name="MenuButton" type="Button" parent="Scorecard/Panel"]
+offset_left = 100.0
+offset_top = 370.0
+offset_right = 300.0
+offset_bottom = 415.0
+theme_override_font_sizes/font_size = 20
+text = "Back to Menu"
+
+[connection signal="pressed" from="Scorecard/Panel/MenuButton" to="." method="on_back_to_menu"]
