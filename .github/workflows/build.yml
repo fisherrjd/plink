@@ -144,10 +144,21 @@ jobs:
             echo "**Linux/Windows:** keep the extracted files together — the executable"
             echo "needs the libplink.so / plink.dll sitting next to it."
           } > notes.md
-          gh release delete latest --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
-          gh release create latest dist/*.zip \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --prerelease \
-            --title "Latest build (${GITHUB_SHA:0:7})" \
-            --notes-file notes.md
+          if gh release view latest --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/latest" \
+              -f sha="$GITHUB_SHA" -F force=true
+            gh release edit latest \
+              --repo "$GITHUB_REPOSITORY" \
+              --prerelease \
+              --title "Latest build (${GITHUB_SHA:0:7})" \
+              --notes-file notes.md
+            gh release upload latest dist/*.zip \
+              --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create latest dist/*.zip \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --prerelease \
+              --title "Latest build (${GITHUB_SHA:0:7})" \
+              --notes-file notes.md
+          fi
