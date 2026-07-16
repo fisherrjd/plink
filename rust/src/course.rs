@@ -115,6 +115,60 @@ impl IArea2D for Rough {
     }
 }
 
+/// Water hazard: a rolling ball that touches it takes a one-stroke penalty
+/// and is returned to where the stroke was played. Airborne chips fly over.
+#[derive(GodotClass)]
+#[class(init, base=Area2D)]
+pub struct Water {
+    #[export]
+    #[init(val = Vector2::new(220.0, 120.0))]
+    size: Vector2,
+    #[export]
+    #[init(val = Color::from_rgb(0.16, 0.38, 0.62))]
+    color: Color,
+    base: Base<Area2D>,
+}
+
+#[godot_api]
+impl IArea2D for Water {
+    fn ready(&mut self) {
+        let mut shape = RectangleShape2D::new_gd();
+        shape.set_size(self.size);
+        let mut collider = CollisionShape2D::new_alloc();
+        collider.set_shape(&shape);
+        self.base_mut().add_child(&collider);
+    }
+
+    fn draw(&mut self) {
+        let rect = Rect2::new(-self.size * 0.5, self.size);
+        let color = self.color;
+        let ripple = Color::from_rgba(1.0, 1.0, 1.0, 0.25);
+        self.base_mut().draw_rect(rect, color);
+        // A few ripple dashes so water reads differently from felt.
+        let w = self.size.x * 0.22;
+        for (dx, dy) in [(-0.25, -0.2), (0.15, 0.05), (-0.1, 0.3)] {
+            let center = Vector2::new(self.size.x * dx as f32, self.size.y * dy as f32);
+            self.base_mut()
+                .draw_line_ex(
+                    center - Vector2::new(w * 0.5, 0.0),
+                    center + Vector2::new(w * 0.5, 0.0),
+                    ripple,
+                )
+                .width(3.0)
+                .done();
+        }
+    }
+
+    fn physics_process(&mut self, _delta: f64) {
+        for body in self.base().get_overlapping_bodies().iter_shared() {
+            let Ok(mut ball) = body.try_cast::<Ball>() else {
+                continue;
+            };
+            ball.bind_mut().splash();
+        }
+    }
+}
+
 /// Boost pad: fires the ball along the pad's +X axis (rotate the node to
 /// aim it) once per entry.
 #[derive(GodotClass)]

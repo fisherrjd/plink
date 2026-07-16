@@ -10,6 +10,10 @@ size = Vector2(990, 460)
 position = Vector2(900, 360)
 size = Vector2(160, 460)
 
+[node name="Pond" type="Water" parent="."]
+position = Vector2(530, 450)
+size = Vector2(110, 230)
+
 [node name="WallTop" type="Wall" parent="."]
 position = Vector2(640, 145)
 size = Vector2(990, 30)

@@ -1,6 +1,7 @@
+use godot::classes::physics_server_2d::BodyState;
 use godot::classes::{
     CircleShape2D, CollisionShape2D, IRigidBody2D, InputEvent, InputEventMouseButton, Line2D,
-    PhysicsMaterial, RigidBody2D,
+    PhysicsMaterial, PhysicsServer2D, RigidBody2D,
 };
 use godot::global::MouseButton;
 use godot::prelude::*;
@@ -43,6 +44,8 @@ pub struct Ball {
     /// Chip flight state: seconds remaining / total flight time.
     air_left: f32,
     air_total: f32,
+    /// Where the last stroke was played from; water hazards reset here.
+    last_stroke_pos: Vector2,
     aim_line: Option<Gd<Line2D>>,
     base: Base<RigidBody2D>,
 }
@@ -74,6 +77,7 @@ impl Ball {
         if self.sunk || !self.stopped || dir.length() < 0.001 {
             return false;
         }
+        self.last_stroke_pos = self.base().get_global_position();
         let impulse = dir.normalized() * (power.clamp(0.0, 1.0) * self.max_drag * self.power);
         self.base_mut().apply_impulse(impulse);
         self.stopped = false;
@@ -89,6 +93,7 @@ impl Ball {
         if self.sunk || !self.stopped || dir.length() < 0.001 {
             return false;
         }
+        self.last_stroke_pos = self.base().get_global_position();
         let power = power.clamp(0.0, 1.0);
         let impulse = dir.normalized() * (power * self.max_drag * self.power);
         self.base_mut().apply_impulse(impulse);
@@ -100,6 +105,31 @@ impl Ball {
         self.still_time = 0.0;
         self.signals().stroke_taken().emit();
         true
+    }
+
+    /// Water hazard: one penalty stroke, then replay from where the last
+    /// stroke was taken. Only a rolling ball can splash — the reset sets
+    /// `stopped`, which also debounces the area-overlap frames that follow.
+    pub fn splash(&mut self) {
+        if self.sunk || self.stopped || self.airborne() {
+            return;
+        }
+        self.signals().stroke_taken().emit();
+        // Teleport through the physics server: a plain set_global_position
+        // on a moving RigidBody2D gets overwritten by the body's integrated
+        // transform at the end of the step.
+        let reset = self.last_stroke_pos;
+        let mut transform = self.base().get_global_transform();
+        transform.origin = reset;
+        let rid = self.base().get_rid();
+        let mut server = PhysicsServer2D::singleton();
+        server.body_set_state(rid, BodyState::TRANSFORM, &transform.to_variant());
+        server.body_set_state(rid, BodyState::LINEAR_VELOCITY, &Vector2::ZERO.to_variant());
+        self.base_mut().set_global_position(reset);
+        self.base_mut().set_linear_velocity(Vector2::ZERO);
+        self.base_mut().set_linear_damp(BALL_DAMP);
+        self.stopped = true;
+        self.still_time = 0.0;
     }
 
     fn airborne(&self) -> bool {
@@ -162,6 +192,7 @@ impl IRigidBody2D for Ball {
         self.base_mut().add_child(&line);
         self.aim_line = Some(line);
 
+        self.last_stroke_pos = self.base().get_global_position();
         self.stopped = true;
     }
 
@@ -204,6 +235,13 @@ impl IRigidBody2D for Ball {
             if self.air_left <= 0.0 {
                 self.land();
             }
+            return;
+        }
+        // Out of bounds (a chip that cleared the outer walls): treat like
+        // water — penalty stroke and replay from the last stroke position.
+        let pos = self.base().get_global_position();
+        if !(110.0..=1170.0).contains(&pos.x) || !(100.0..=620.0).contains(&pos.y) {
+            self.splash();
             return;
         }
         if self.base().get_linear_velocity().length() < self.stop_speed {
