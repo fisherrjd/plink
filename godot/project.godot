@@ -19,3 +19,7 @@ window/size/viewport_height=720
 
 common/physics_ticks_per_second=120
 2d/default_gravity=0.0
+
+[rendering]
+
+textures/vram_compression/import_etc2_astc=true

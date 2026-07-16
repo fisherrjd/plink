@@ -1,0 +1,101 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: "4.7-stable"
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  export:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            preset: linux
+          - os: windows-latest
+            preset: windows
+          - os: macos-latest
+            preset: macos
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+
+      - name: Build GDExtension
+        if: runner.os != 'macOS'
+        working-directory: rust
+        run: cargo build --release
+
+      - name: Build GDExtension (universal)
+        if: runner.os == 'macOS'
+        working-directory: rust
+        run: |
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+          cargo build --release --target aarch64-apple-darwin
+          cargo build --release --target x86_64-apple-darwin
+          mkdir -p target/release
+          lipo -create \
+            target/aarch64-apple-darwin/release/libplink.dylib \
+            target/x86_64-apple-darwin/release/libplink.dylib \
+            -output target/release/libplink.dylib
+
+      - name: Install Godot and export templates
+        run: |
+          set -euo pipefail
+          BASE_URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}"
+          case "$RUNNER_OS" in
+            Linux)
+              curl -fsSLO "${BASE_URL}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+              unzip -q "Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+              echo "GODOT=$PWD/Godot_v${GODOT_VERSION}_linux.x86_64" >> "$GITHUB_ENV"
+              TEMPLATES_DIR="$HOME/.local/share/godot/export_templates"
+              ;;
+            macOS)
+              curl -fsSLO "${BASE_URL}/Godot_v${GODOT_VERSION}_macos.universal.zip"
+              unzip -q "Godot_v${GODOT_VERSION}_macos.universal.zip"
+              echo "GODOT=$PWD/Godot.app/Contents/MacOS/Godot" >> "$GITHUB_ENV"
+              TEMPLATES_DIR="$HOME/Library/Application Support/Godot/export_templates"
+              ;;
+            Windows)
+              curl -fsSLO "${BASE_URL}/Godot_v${GODOT_VERSION}_win64.exe.zip"
+              7z x -y "Godot_v${GODOT_VERSION}_win64.exe.zip" > /dev/null
+              echo "GODOT=$PWD/Godot_v${GODOT_VERSION}_win64_console.exe" >> "$GITHUB_ENV"
+              TEMPLATES_DIR="$APPDATA/Godot/export_templates"
+              ;;
+          esac
+          curl -fsSLO "${BASE_URL}/Godot_v${GODOT_VERSION}_export_templates.tpz"
+          EXTRACT_DIR="$RUNNER_TEMP/godot-templates"
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            7z x -y "Godot_v${GODOT_VERSION}_export_templates.tpz" -o"$EXTRACT_DIR" > /dev/null
+          else
+            unzip -q "Godot_v${GODOT_VERSION}_export_templates.tpz" -d "$EXTRACT_DIR"
+          fi
+          mkdir -p "$TEMPLATES_DIR"
+          mv "$EXTRACT_DIR/templates" "$TEMPLATES_DIR/${GODOT_VERSION/-/.}"
+
+      - name: Export ${{ matrix.preset }}
+        run: |
+          set -euo pipefail
+          mkdir -p "build/${{ matrix.preset }}"
+          "$GODOT" --headless --path godot --import
+          "$GODOT" --headless --path godot --export-release "${{ matrix.preset }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plink-${{ matrix.preset }}
+          path: build/${{ matrix.preset }}/
+          if-no-files-found: error
