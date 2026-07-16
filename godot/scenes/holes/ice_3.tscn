@@ -1,0 +1,64 @@
+[gd_scene format=3]
+
+[node name="Ice3" type="Node2D"]
+
+[node name="Felt" type="Felt" parent="."]
+position = Vector2(640, 360)
+size = Vector2(990, 460)
+color = Color(0.82, 0.87, 0.92, 1)
+
+[node name="IceMain" type="Ice" parent="."]
+position = Vector2(520, 360)
+size = Vector2(500, 400)
+
+[node name="SnowStrip" type="Rough" parent="."]
+position = Vector2(850, 360)
+size = Vector2(120, 400)
+color = Color(0.97, 0.97, 1, 1)
+damp = 3.0
+
+[node name="IceGreen" type="Ice" parent="."]
+position = Vector2(1010, 250)
+size = Vector2(170, 170)
+
+[node name="WallTop" type="Wall" parent="."]
+position = Vector2(640, 145)
+size = Vector2(990, 30)
+color = Color(0.5, 0.62, 0.75, 1)
+
+[node name="WallBottom" type="Wall" parent="."]
+position = Vector2(640, 575)
+size = Vector2(990, 30)
+color = Color(0.5, 0.62, 0.75, 1)
+
+[node name="WallLeft" type="Wall" parent="."]
+position = Vector2(160, 360)
+size = Vector2(30, 400)
+color = Color(0.5, 0.62, 0.75, 1)
+
+[node name="WallRight" type="Wall" parent="."]
+position = Vector2(1120, 360)
+size = Vector2(30, 400)
+color = Color(0.5, 0.62, 0.75, 1)
+
+[node name="Iceberg1" type="Wall" parent="."]
+position = Vector2(460, 270)
+size = Vector2(38, 38)
+color = Color(0.88, 0.94, 0.98, 1)
+
+[node name="Iceberg2" type="Wall" parent="."]
+position = Vector2(600, 450)
+size = Vector2(38, 38)
+color = Color(0.88, 0.94, 0.98, 1)
+
+[node name="BankWall" type="Wall" parent="."]
+position = Vector2(1080, 480)
+rotation = -0.785
+size = Vector2(200, 26)
+color = Color(0.5, 0.62, 0.75, 1)
+
+[node name="Cup" type="Hole" parent="."]
+position = Vector2(1030, 250)
+
+[node name="Ball" type="Ball" parent="."]
+position = Vector2(250, 500)

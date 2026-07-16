@@ -17,53 +17,112 @@ color = Color(0.11, 0.25, 0.14, 1)
 
 [node name="Title" type="Label" parent="."]
 offset_left = 440.0
-offset_top = 180.0
+offset_top = 40.0
 offset_right = 840.0
-offset_bottom = 260.0
+offset_bottom = 120.0
 theme_override_font_sizes/font_size = 64
 text = "plink"
 horizontal_alignment = 1
 
 [node name="Subtitle" type="Label" parent="."]
 offset_left = 440.0
-offset_top = 260.0
+offset_top = 120.0
 offset_right = 840.0
-offset_bottom = 300.0
+offset_bottom = 150.0
 theme_override_font_sizes/font_size = 20
 text = "a tiny putt putt game"
 horizontal_alignment = 1
 
-[node name="StartButton" type="Button" parent="."]
+[node name="ClassicLabel" type="Label" parent="."]
+offset_left = 170.0
+offset_top = 200.0
+offset_right = 470.0
+offset_bottom = 236.0
+theme_override_font_sizes/font_size = 26
+text = "Classic"
+horizontal_alignment = 1
+
+[node name="IceLabel" type="Label" parent="."]
+offset_left = 490.0
+offset_top = 200.0
+offset_right = 790.0
+offset_bottom = 236.0
+theme_override_font_sizes/font_size = 26
+text = "Ice"
+horizontal_alignment = 1
+
+[node name="DesertLabel" type="Label" parent="."]
+offset_left = 810.0
+offset_top = 200.0
+offset_right = 1110.0
+offset_bottom = 236.0
+theme_override_font_sizes/font_size = 26
+text = "Desert"
+horizontal_alignment = 1
+
+[node name="StartClassic" type="Button" parent="."]
+offset_left = 220.0
+offset_top = 248.0
+offset_right = 420.0
+offset_bottom = 292.0
+theme_override_font_sizes/font_size = 20
+text = "Play 18"
+
+[node name="StartIce" type="Button" parent="."]
 offset_left = 540.0
-offset_top = 380.0
+offset_top = 248.0
 offset_right = 740.0
-offset_bottom = 430.0
-theme_override_font_sizes/font_size = 24
-text = "Start"
+offset_bottom = 292.0
+theme_override_font_sizes/font_size = 20
+text = "Play 18"
+
+[node name="StartDesert" type="Button" parent="."]
+offset_left = 860.0
+offset_top = 248.0
+offset_right = 1060.0
+offset_bottom = 292.0
+theme_override_font_sizes/font_size = 20
+text = "Play 18"
+
+[node name="PracticeLabel" type="Label" parent="."]
+offset_left = 440.0
+offset_top = 314.0
+offset_right = 840.0
+offset_bottom = 340.0
+theme_override_font_sizes/font_size = 16
+text = "or practice a hole"
+horizontal_alignment = 1
+
+[node name="ClassicGrid" type="GridContainer" parent="."]
+offset_left = 184.0
+offset_top = 356.0
+offset_right = 456.0
+offset_bottom = 496.0
+columns = 6
+
+[node name="IceGrid" type="GridContainer" parent="."]
+offset_left = 504.0
+offset_top = 356.0
+offset_right = 776.0
+offset_bottom = 496.0
+columns = 6
+
+[node name="DesertGrid" type="GridContainer" parent="."]
+offset_left = 824.0
+offset_top = 356.0
+offset_right = 1096.0
+offset_bottom = 496.0
+columns = 6
 
 [node name="QuitButton" type="Button" parent="."]
 offset_left = 540.0
-offset_top = 450.0
+offset_top = 600.0
 offset_right = 740.0
-offset_bottom = 500.0
-theme_override_font_sizes/font_size = 24
+offset_bottom = 644.0
+theme_override_font_sizes/font_size = 22
 text = "Quit"
 
-[node name="PracticeLabel" type="Label" parent="."]
-offset_left = 371.0
-offset_top = 530.0
-offset_right = 909.0
-offset_bottom = 556.0
-theme_override_font_sizes/font_size = 18
-text = "practice a hole"
-horizontal_alignment = 1
-
-[node name="HoleGrid" type="GridContainer" parent="."]
-offset_left = 371.0
-offset_top = 564.0
-offset_right = 909.0
-offset_bottom = 660.0
-columns = 9
-
-[connection signal="pressed" from="StartButton" to="." method="on_start_pressed"]
+[connection signal="pressed" from="StartClassic" to="." method="on_start_classic"]
+[connection signal="pressed" from="StartIce" to="." method="on_start_ice"]
+[connection signal="pressed" from="StartDesert" to="." method="on_start_desert"]
 [connection signal="pressed" from="QuitButton" to="." method="on_quit_pressed"]

@@ -10,6 +10,14 @@ use crate::course::Hole;
 /// round. A process-wide static survives the menu -> main scene change.
 pub static SELECTED_HOLE: AtomicI32 = AtomicI32::new(-1);
 
+/// Course picked on the menu: 0 = Classic, 1 = Ice, 2 = Desert.
+pub static SELECTED_COURSE: AtomicI32 = AtomicI32::new(0);
+
+/// Ice and Desert courses live here (scene path prefix + pars); Classic
+/// keeps using the exports set in main.tscn.
+const ICE_PARS: [i32; 18] = [2, 3, 3, 2, 3, 4, 3, 4, 3, 4, 3, 4, 2, 4, 5, 3, 4, 5];
+const DESERT_PARS: [i32; 18] = [2, 3, 3, 4, 3, 4, 3, 4, 3, 4, 2, 4, 3, 4, 5, 3, 4, 5];
+
 /// Root of the round: loads hole scenes in sequence, counts strokes,
 /// drives the HUD, and shows the scorecard after the last hole.
 ///
@@ -169,9 +177,29 @@ impl GameManager {
     }
 }
 
+impl GameManager {
+    /// Swap in a themed course: scenes follow `{prefix}_{n}.tscn`.
+    fn install_course(&mut self, prefix: &str, pars: &[i32]) {
+        self.hole_scenes = (1..=pars.len())
+            .map(|i| GString::from(&format!("res://scenes/holes/{prefix}_{i}.tscn")))
+            .collect();
+        self.pars = PackedInt32Array::from(pars);
+    }
+}
+
 #[godot_api]
 impl INode for GameManager {
     fn ready(&mut self) {
+        // PLINK_COURSE=1|2 (dev/CLI) overrides the menu's course selection.
+        let course = std::env::var("PLINK_COURSE")
+            .ok()
+            .and_then(|v| v.parse::<i32>().ok())
+            .unwrap_or_else(|| SELECTED_COURSE.load(Ordering::Relaxed));
+        match course {
+            1 => self.install_course("ice", &ICE_PARS),
+            2 => self.install_course("desert", &DESERT_PARS),
+            _ => {}
+        }
         if self.hole_scenes.is_empty() {
             godot_error!("GameManager: no hole scenes configured");
             return;

@@ -1,0 +1,56 @@
+[gd_scene format=3]
+
+[node name="Ice12" type="Node2D"]
+
+[node name="Felt" type="Felt" parent="."]
+position = Vector2(640, 360)
+size = Vector2(990, 460)
+color = Color(0.82, 0.87, 0.92, 1)
+
+[node name="WallTop" type="Wall" parent="."]
+position = Vector2(640, 145)
+size = Vector2(990, 30)
+color = Color(0.5, 0.62, 0.75, 1)
+
+[node name="WallBottom" type="Wall" parent="."]
+position = Vector2(640, 575)
+size = Vector2(990, 30)
+color = Color(0.5, 0.62, 0.75, 1)
+
+[node name="WallLeft" type="Wall" parent="."]
+position = Vector2(160, 360)
+size = Vector2(30, 400)
+color = Color(0.5, 0.62, 0.75, 1)
+
+[node name="WallRight" type="Wall" parent="."]
+position = Vector2(1120, 360)
+size = Vector2(30, 400)
+color = Color(0.5, 0.62, 0.75, 1)
+
+[node name="Rink" type="Ice" parent="."]
+position = Vector2(665, 340)
+size = Vector2(800, 330)
+
+[node name="Bank1" type="Wall" parent="."]
+position = Vector2(500, 230)
+rotation = 0.6
+size = Vector2(200, 24)
+color = Color(0.5, 0.62, 0.75, 1)
+
+[node name="Bank2" type="Wall" parent="."]
+position = Vector2(820, 480)
+rotation = 0.7
+size = Vector2(200, 24)
+color = Color(0.5, 0.62, 0.75, 1)
+
+[node name="Bank3" type="Wall" parent="."]
+position = Vector2(660, 350)
+rotation = -0.6
+size = Vector2(200, 24)
+color = Color(0.5, 0.62, 0.75, 1)
+
+[node name="Cup" type="Hole" parent="."]
+position = Vector2(1040, 200)
+
+[node name="Ball" type="Ball" parent="."]
+position = Vector2(240, 530)

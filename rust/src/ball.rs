@@ -9,6 +9,11 @@ use godot::prelude::*;
 /// Baseline rolling friction; `Rough` patches raise damping and restore this.
 pub const BALL_DAMP: f32 = 1.1;
 
+/// Seconds the quicksand swallow animation takes.
+const SWALLOW_TIME: f32 = 0.7;
+/// Pause between vanishing into the sand and reappearing at the shot origin.
+const RESPAWN_DELAY: f32 = 0.45;
+
 /// The golf ball. Click near it while it's stopped, drag away to aim
 /// (slingshot style), release to putt.
 #[derive(GodotClass)]
@@ -46,6 +51,16 @@ pub struct Ball {
     air_total: f32,
     /// Where the last stroke was played from; water hazards reset here.
     last_stroke_pos: Vector2,
+    /// Quicksand swallow animation: seconds remaining (0 = inactive), the
+    /// grab point, and the pool center the ball is dragged toward.
+    swallow_t: f32,
+    swallow_from: Vector2,
+    swallow_center: Vector2,
+    /// Countdown to reappearing at the shot origin after being swallowed.
+    respawn_t: f32,
+    /// Draw-scale factor; shrinks to zero while the sand pulls the ball under.
+    #[init(val = 1.0)]
+    sink_scale: f32,
     aim_line: Option<Gd<Line2D>>,
     base: Base<RigidBody2D>,
 }
@@ -115,17 +130,53 @@ impl Ball {
             return;
         }
         self.signals().stroke_taken().emit();
-        // Teleport through the physics server: a plain set_global_position
-        // on a moving RigidBody2D gets overwritten by the body's integrated
-        // transform at the end of the step.
         let reset = self.last_stroke_pos;
+        self.teleport_to(reset);
+    }
+
+    /// Quicksand: the ball is dragged under (shrinking toward `center`),
+    /// then respawns where the last stroke was played, with a one-stroke
+    /// penalty. Returns false if the ball can't be swallowed right now.
+    /// Like `splash`, only a rolling ball can be eaten — the respawn sets
+    /// `stopped`, which debounces the stale area-overlap frames after the
+    /// teleport (without it the pool re-swallows the ball from the tee,
+    /// forever).
+    pub fn swallow(&mut self, center: Vector2) -> bool {
+        if self.sunk || self.stopped || self.airborne() || self.mid_swallow() {
+            return false;
+        }
+        self.aiming = false;
+        if let Some(line) = &mut self.aim_line {
+            line.set_visible(false);
+        }
+        self.stopped = false;
+        self.swallow_t = SWALLOW_TIME;
+        self.swallow_from = self.base().get_global_position();
+        self.swallow_center = center;
+        // Zero velocity before freezing so unfreezing can't restore it.
+        self.base_mut().set_linear_velocity(Vector2::ZERO);
+        // Freeze so the sink animation owns the transform.
+        self.base_mut().set_freeze_enabled(true);
+        self.signals().stroke_taken().emit();
+        true
+    }
+
+    /// True from the moment the sand grabs the ball until it's back in play.
+    pub fn mid_swallow(&self) -> bool {
+        self.swallow_t > 0.0 || self.respawn_t > 0.0
+    }
+
+    /// Hard-teleport through the physics server: a plain set_global_position
+    /// on a moving RigidBody2D gets overwritten by the body's integrated
+    /// transform at the end of the step.
+    fn teleport_to(&mut self, pos: Vector2) {
         let mut transform = self.base().get_global_transform();
-        transform.origin = reset;
+        transform.origin = pos;
         let rid = self.base().get_rid();
         let mut server = PhysicsServer2D::singleton();
         server.body_set_state(rid, BodyState::TRANSFORM, &transform.to_variant());
         server.body_set_state(rid, BodyState::LINEAR_VELOCITY, &Vector2::ZERO.to_variant());
-        self.base_mut().set_global_position(reset);
+        self.base_mut().set_global_position(pos);
         self.base_mut().set_linear_velocity(Vector2::ZERO);
         self.base_mut().set_linear_damp(BALL_DAMP);
         self.stopped = true;
@@ -197,7 +248,7 @@ impl IRigidBody2D for Ball {
     }
 
     fn draw(&mut self) {
-        let mut radius = self.radius;
+        let mut radius = self.radius * self.sink_scale;
         if self.airborne() {
             // Swell mid-flight to sell the height.
             let progress = 1.0 - self.air_left / self.air_total;
@@ -224,6 +275,33 @@ impl IRigidBody2D for Ball {
 
     fn physics_process(&mut self, delta: f64) {
         if self.sunk || self.stopped {
+            return;
+        }
+        if self.swallow_t > 0.0 {
+            self.swallow_t -= delta as f32;
+            let t = (1.0 - self.swallow_t.max(0.0) / SWALLOW_TIME).clamp(0.0, 1.0);
+            // Ease in: the sand grips slowly, then drags the ball under.
+            let pos = self.swallow_from.lerp(self.swallow_center, t * t);
+            self.base_mut().set_global_position(pos);
+            self.sink_scale = 1.0 - t;
+            self.base_mut().queue_redraw();
+            if self.swallow_t <= 0.0 {
+                self.base_mut().set_visible(false);
+                self.respawn_t = RESPAWN_DELAY;
+            }
+            return;
+        }
+        if self.respawn_t > 0.0 {
+            self.respawn_t -= delta as f32;
+            if self.respawn_t > 0.0 {
+                return;
+            }
+            let reset = self.last_stroke_pos;
+            self.base_mut().set_freeze_enabled(false);
+            self.teleport_to(reset);
+            self.sink_scale = 1.0;
+            self.base_mut().set_visible(true);
+            self.base_mut().queue_redraw();
             return;
         }
         if self.airborne() {

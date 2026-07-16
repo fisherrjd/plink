@@ -1,0 +1,43 @@
+[gd_scene format=3]
+
+[node name="Desert3" type="Node2D"]
+
+[node name="Felt" type="Felt" parent="."]
+position = Vector2(640, 360)
+size = Vector2(990, 460)
+color = Color(0.85, 0.72, 0.45, 1)
+
+[node name="WallTop" type="Wall" parent="."]
+position = Vector2(640, 145)
+size = Vector2(990, 30)
+color = Color(0.55, 0.38, 0.2, 1)
+
+[node name="WallBottom" type="Wall" parent="."]
+position = Vector2(640, 575)
+size = Vector2(990, 30)
+color = Color(0.55, 0.38, 0.2, 1)
+
+[node name="WallLeft" type="Wall" parent="."]
+position = Vector2(160, 360)
+size = Vector2(30, 400)
+color = Color(0.55, 0.38, 0.2, 1)
+
+[node name="WallRight" type="Wall" parent="."]
+position = Vector2(1120, 360)
+size = Vector2(30, 400)
+color = Color(0.55, 0.38, 0.2, 1)
+
+[node name="Gust" type="SpeedPad" parent="."]
+position = Vector2(450, 360)
+size = Vector2(70, 100)
+boost = 500.0
+
+[node name="Pool" type="Quicksand" parent="."]
+position = Vector2(700, 360)
+size = Vector2(200, 160)
+
+[node name="Cup" type="Hole" parent="."]
+position = Vector2(1020, 360)
+
+[node name="Ball" type="Ball" parent="."]
+position = Vector2(260, 360)
