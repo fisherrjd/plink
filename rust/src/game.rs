@@ -1,8 +1,14 @@
+use std::sync::atomic::{AtomicI32, Ordering};
+
 use godot::classes::{CanvasLayer, Label, Object, PackedScene};
 use godot::prelude::*;
 
 use crate::ball::Ball;
 use crate::course::Hole;
+
+/// 1-based hole picked on the menu's practice grid; -1 = play the full
+/// round. A process-wide static survives the menu -> main scene change.
+pub static SELECTED_HOLE: AtomicI32 = AtomicI32::new(-1);
 
 /// Root of the round: loads hole scenes in sequence, counts strokes,
 /// drives the HUD, and shows the scorecard after the last hole.
@@ -21,6 +27,8 @@ pub struct GameManager {
     current: usize,
     strokes: Vec<i32>,
     finished: bool,
+    /// Practice mode: play only the selected hole, then show the card.
+    single: bool,
     base: Base<Node>,
 }
 
@@ -42,6 +50,10 @@ impl GameManager {
 
     #[func]
     fn advance_hole(&mut self) {
+        if self.single {
+            self.show_scorecard();
+            return;
+        }
         self.current += 1;
         if self.current < self.hole_scenes.len() {
             self.load_hole();
@@ -95,23 +107,34 @@ impl GameManager {
 
     fn show_scorecard(&mut self) {
         self.finished = true;
-        let mut text = String::from("Scorecard\n\n");
-        for (i, strokes) in self.strokes.iter().enumerate() {
-            let par = self.par_for(i);
-            let diff = strokes - par;
-            let diff_str = match diff {
-                d if d > 0 => format!("+{d}"),
-                0 => "E".to_string(),
-                d => d.to_string(),
-            };
-            text.push_str(&format!(
-                "Hole {}:  {strokes}  (par {par}, {diff_str})\n",
-                i + 1
-            ));
-        }
-        let total: i32 = self.strokes.iter().sum();
-        let total_par: i32 = self.pars.as_slice().iter().sum();
-        text.push_str(&format!("\nTotal: {total}  (par {total_par})"));
+        let text = if self.single {
+            let i = self.current;
+            let strokes = self.strokes.get(i).copied().unwrap_or(0);
+            format!(
+                "Practice\n\nHole {}:  {strokes}  (par {})",
+                i + 1,
+                self.par_for(i)
+            )
+        } else {
+            let mut text = String::from("Scorecard\n\n");
+            for (i, strokes) in self.strokes.iter().enumerate() {
+                let par = self.par_for(i);
+                let diff = strokes - par;
+                let diff_str = match diff {
+                    d if d > 0 => format!("+{d}"),
+                    0 => "E".to_string(),
+                    d => d.to_string(),
+                };
+                text.push_str(&format!(
+                    "Hole {}:  {strokes}  (par {par}, {diff_str})\n",
+                    i + 1
+                ));
+            }
+            let total: i32 = self.strokes.iter().sum();
+            let total_par: i32 = self.pars.as_slice().iter().sum();
+            text.push_str(&format!("\nTotal: {total}  (par {total_par})"));
+            text
+        };
 
         self.set_label("Scorecard/Panel/Results", &text);
         self.base()
@@ -155,6 +178,15 @@ impl INode for GameManager {
         }
         self.strokes = vec![0; self.hole_scenes.len()];
         self.current = 0;
+        // PLINK_HOLE=N (dev/CLI) overrides the menu's practice selection.
+        let selected = std::env::var("PLINK_HOLE")
+            .ok()
+            .and_then(|v| v.parse::<i32>().ok())
+            .unwrap_or_else(|| SELECTED_HOLE.load(Ordering::Relaxed));
+        if selected >= 1 && (selected as usize) <= self.hole_scenes.len() {
+            self.current = selected as usize - 1;
+            self.single = true;
+        }
         self.load_hole();
     }
 }

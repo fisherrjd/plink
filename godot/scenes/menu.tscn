@@ -49,5 +49,21 @@ offset_bottom = 500.0
 theme_override_font_sizes/font_size = 24
 text = "Quit"
 
+[node name="PracticeLabel" type="Label" parent="."]
+offset_left = 371.0
+offset_top = 530.0
+offset_right = 909.0
+offset_bottom = 556.0
+theme_override_font_sizes/font_size = 18
+text = "practice a hole"
+horizontal_alignment = 1
+
+[node name="HoleGrid" type="GridContainer" parent="."]
+offset_left = 371.0
+offset_top = 564.0
+offset_right = 909.0
+offset_bottom = 660.0
+columns = 9
+
 [connection signal="pressed" from="StartButton" to="." method="on_start_pressed"]
 [connection signal="pressed" from="QuitButton" to="." method="on_quit_pressed"]
