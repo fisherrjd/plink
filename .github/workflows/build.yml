@@ -133,10 +133,21 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          {
+            echo "Automated build of ${GITHUB_SHA} from main."
+            echo
+            echo "**macOS:** the app is not notarized, so Gatekeeper blocks the first launch."
+            echo 'Either run `xattr -dr com.apple.quarantine plink.app` after unzipping, or'
+            echo "try to open it once, then approve it under System Settings → Privacy &"
+            echo "Security → Open Anyway."
+            echo
+            echo "**Linux/Windows:** keep the extracted files together — the executable"
+            echo "needs the libplink.so / plink.dll sitting next to it."
+          } > notes.md
           gh release delete latest --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag || true
           gh release create latest dist/*.zip \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --prerelease \
             --title "Latest build (${GITHUB_SHA:0:7})" \
-            --notes "Automated build of ${GITHUB_SHA} from main."
+            --notes-file notes.md
