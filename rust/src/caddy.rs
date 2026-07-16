@@ -9,7 +9,8 @@ use crate::game::GameManager;
 
 /// File-based control bridge so an external driver (tools/caddy.py) can play
 /// the game: publishes state to .caddy/state.json, consumes putt/screenshot
-/// commands from .caddy/command.json, and snapshots each hole to course1/.
+/// commands from .caddy/command.json, and snapshots each hole to a per-course
+/// directory (course1/, ice/, desert/ — following PLINK_COURSE).
 /// Inert unless the game is launched with PLINK_CADDY=1.
 #[derive(GodotClass)]
 #[class(init, base=Node)]
@@ -43,7 +44,15 @@ impl INode for Caddy {
             .map(PathBuf::from)
             .unwrap_or_else(|| PathBuf::from("."));
         self.caddy_dir = repo.join(".caddy");
-        self.course_dir = repo.join("course1");
+        let course = std::env::var("PLINK_COURSE")
+            .ok()
+            .and_then(|v| v.parse::<i64>().ok())
+            .unwrap_or(0);
+        self.course_dir = repo.join(match course {
+            1 => "ice",
+            2 => "desert",
+            _ => "course1",
+        });
         let _ = std::fs::create_dir_all(&self.caddy_dir);
         let _ = std::fs::create_dir_all(&self.course_dir);
         self.last_hole = -1;
